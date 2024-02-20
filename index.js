@@ -1,17 +1,27 @@
 import OpenAI from "openai";
 import "dotenv/config";
+import express from "express";
+import bodyParser from "body-parser";
+import cors from "cors";
 
 const openai = new OpenAI({
   apiKey: process.env.OPEN_AI_API_KEY,
 });
 
-const main = async () => {
+const app = express();
+const port = 3000;
+
+// express middleware
+app.use(bodyParser.json());
+app.use(cors());
+
+app.get("/", async (req, res) => {
   const completion = await openai.chat.completions.create({
     messages: [{ role: "user", content: "Hello world!" }],
     model: "gpt-3.5-turbo",
   });
 
-  console.log(completion.choices[0]);
-};
+  res.json(completion.choices[0]);
+});
 
-await main();
+app.listen(port, () => console.log(`Listening on port ${port}`));
