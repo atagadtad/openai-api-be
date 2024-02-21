@@ -5,13 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
     <script src="./htmx.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body>
-    <main>
-      <h1>Chat</h1>
-      <form hx-post="http://localhost:3000/message">
-        <input type="text" name="message" />
-        <button type="submit">Send</button>
+    <main class="w-full h-screen">
+      <h1 class="text-lg text-center">Chat</h1>
+      <div id="chat"></div>
+      <form class="bg-gray-200 mx-auto" hx-post="/message">
+        <input
+          class="w-full border-solid border-2 border-gray-400"
+          type="text"
+          name="message"
+        />
+        <button class="" type="submit">Send</button>
       </form>
     </main>
   </body>
