@@ -18,8 +18,18 @@ app.use(cors());
 app.post("/message", async (req, res) => {
   console.log(req.body);
 
+  if (
+    req.body.messages.length === 0 ||
+    !req.body.messages[0].role ||
+    !req.body.messages[0].content
+  ) {
+    return res.json({
+      error: "Message value must be an populated array.",
+    });
+  }
+
   const completion = await openai.chat.completions.create({
-    messages: [{ role: "user", content: "Hello world!" }],
+    messages: [...req.body.messages],
     model: "gpt-3.5-turbo",
   });
 
