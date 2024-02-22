@@ -8,14 +8,16 @@ import sqlite3 from "sqlite3";
 const db = new (sqlite3.verbose().Database)("./db.sqlite");
 
 db.serialize(() => {
-  db.prepare(`CREATE TABLE IF NOT EXISTS history (content TEXT)`)
+  // db.run("DROP TABLE history");
+
+  db.prepare(`CREATE TABLE IF NOT EXISTS history (role TEXT, content TEXT)`)
     .run()
     .finalize();
 
   db.get(
     `SELECT name FROM sqlite_master WHERE type='table' AND name=?`,
-    "history",
-    (err, row) => console.log({ row })
+    "history"
+    // (err, row) => console.log({ row })
   );
 
   // db.close();
@@ -33,8 +35,22 @@ app.use(express.urlencoded());
 app.use(cors());
 app.use(express.static("public"));
 
+app.delete("/history", (req, res) => {
+  db.run("DELETE FROM history", [], (err) => {
+    if (err) return console.log(err.message);
+  });
+
+  db.all(`SELECT * FROM history`, [], (err, rows) => {
+    if (err) return console.log(err.message);
+
+    console.log("Verify deleted history:", rows);
+
+    res.send(`<h1 class="text-lg">Deleted user history!</h1>`);
+  });
+});
+
 app.post("/message", async (req, res) => {
-  console.log("req.body: ", JSON.stringify(req.body));
+  // console.log("req.body: ", JSON.stringify(req.body));
 
   if (
     !Array.isArray(req?.body?.messages) ||
@@ -48,27 +64,29 @@ app.post("/message", async (req, res) => {
   }
 
   db.run(
-    `INSERT INTO history (content) VALUES (?)`,
-    [req.body.messages[0].content],
+    `INSERT INTO history (role, content) VALUES (?, ?)`,
+    ["user", req.body.messages[0].content],
     (err) => {
       if (err) return console.log(err.message);
     }
   );
 
-  const messages = db.all(`SELECT * FROM history`, [], (err, rows) => {
+  db.all(`SELECT * FROM history`, [], async (err, rows) => {
     if (err) return console.log(err.message);
 
-    console.log({ rows });
+    // console.log({ rows });
+
+    const messages = [...rows];
+
+    console.log({ messages });
+
+    const completion = await openai.chat.completions.create({
+      messages: messages,
+      model: "gpt-3.5-turbo",
+    });
+
+    console.log(completion.choices[0]);
   });
-
-  // console.log({ messages });
-
-  const completion = await openai.chat.completions.create({
-    messages: [...req.body.messages],
-    model: "gpt-3.5-turbo",
-  });
-
-  // console.log(completion.choices[0]);
 
   // res.json(completion.choices[0]);
 
